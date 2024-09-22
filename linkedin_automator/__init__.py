@@ -1,0 +1,1 @@
+from linkedin_automator.linkedin_automator import LinkedInAutomator
