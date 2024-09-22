@@ -1,1 +1,6 @@
 *.env
+build/lib/linkedin_automator/__init__.py
+/build
+/dist
+linkedin_automator.egg-info/dependency_links.txt
+/linkedin_automator.egg-info
