@@ -11,13 +11,15 @@ class LinkedInAutomator:
                  linkedin_email=os.getenv("LINKEDIN_EMAIL"), 
                  linkedin_actor_urn=os.getenv("LINKEDIN_ACTOR_URN"), 
                  linkedin_password=os.getenv("LINKEDIN_PASSWORD"), 
-                 linkedin_access_token=os.getenv("LINKEDIN_ACCESS_TOKEN")):
+                 linkedin_access_token=os.getenv("LINKEDIN_ACCESS_TOKEN"),
+                 cookies=None
+                 ):
         load_dotenv()
         self.email = linkedin_email
         self.actor_urn = linkedin_actor_urn
         self.password = linkedin_password
         self.access_token = linkedin_access_token
-        self.api = Linkedin(self.email, self.password)
+        self.api = Linkedin(self.email, self.password, cookies=cookies)
         
     def get_comments(self, post_url, return_full_objects=False):
             """
