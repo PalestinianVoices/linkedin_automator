@@ -81,6 +81,26 @@ class LinkedInAutomator:
             # comments is the full spaghetti object from the library 
             return (comments_info, comments) if return_full_objects else comments_info
 
+    def get_recent_posts(self,public_id,max_results):
+        """
+        Retrieves the recent posts of a company.
+        
+        Args:
+        public_id (str): Public ID of the company.
+        max_results (int): Maximum number of posts to retrieve.
+        
+        Returns:
+        list: Links of the recent posts.
+        """
+        try:
+            res=self.api.get_company_updates(public_id=public_id,max_results=max_results)
+        except Exception as e:
+            return "Error in getting the posts: "+str(e)
+        
+        links=[]
+        for i in range(len(res)):
+            links.append(res[i]['permalink'])
+        return links[:min(max_results,len(links))]
 
     def get_bad_comments_links(self, post_url, bad_profile_ids):
         """

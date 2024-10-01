@@ -21,7 +21,7 @@ def read_requirements(name):
 # This call to setup() does all the work
 setup(
     name="linkedin_automator",
-    version="0.2.0",
+    version="0.3.0",
     description="A Python library to automate various operations on LinkedIn posts, comments, and replies.",
     long_description=long_description,
     long_description_content_type="text/markdown",
