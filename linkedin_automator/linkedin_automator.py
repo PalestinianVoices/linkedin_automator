@@ -51,9 +51,7 @@ class LinkedInAutomator:
                 signal.alarm(0)  # Disable alarm
             except TimeoutError:
                 print("API request timed out. Moving on.")
-                comments = [] if return_full_objects else []
-                if return_full_objects:
-                    comments = ([], [])
+                return ([], []) if return_full_objects else []
             except Exception as e:
                 # Often fails if no comment
                 if "paginationToken" in str(e):
