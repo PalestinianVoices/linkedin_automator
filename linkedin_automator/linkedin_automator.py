@@ -5,6 +5,18 @@ from dotenv import load_dotenv; load_dotenv()
 from tqdm import tqdm
 import os
 
+import signal
+
+# Let's make a new exception type for timeout
+class TimeoutError(Exception):
+    pass
+
+# A function to throw timeout error (SIGALARM will trigger it when it needs to)
+def timeout_handler(signum, frame):
+    raise TimeoutError("API request timed out")
+
+signal.signal(signal.SIGALRM, timeout_handler)
+
 
 class LinkedInAutomator:
     def __init__(self, 
@@ -34,7 +46,12 @@ class LinkedInAutomator:
             """
             # Use linked api package to get comments
             try:
+                signal.alarm(30)  # Set timeout to 45 seconds; if they pass before signal.alarm(0), it will raise TimeoutError
                 comments = self.api.get_post_comments(post_urn=extract_post_urn(post_url), comment_count=200)
+                signal.alarm(0)  # Disable alarm
+            except TimeoutError:
+                print("API request timed out. Moving on.")
+                return ([], []) if return_full_objects else []
             except Exception as e:
                 # Often fails if no comment
                 if "paginationToken" in str(e):
@@ -81,7 +98,7 @@ class LinkedInAutomator:
             # comments is the full spaghetti object from the library 
             return (comments_info, comments) if return_full_objects else comments_info
 
-    def get_recent_posts(self,public_id,max_results):
+    def get_recent_posts(self,public_id, max_results):
         """
         Retrieves the recent posts of a company.
         
@@ -93,14 +110,14 @@ class LinkedInAutomator:
         list: Links of the recent posts.
         """
         try:
-            res=self.api.get_company_updates(public_id=public_id,max_results=max_results)
+            res = self.api.get_company_updates(public_id=public_id, max_results=max_results)
         except Exception as e:
             return "Error in getting the posts: "+str(e)
         
         links=[]
         for i in range(len(res)):
             links.append(res[i]['permalink'])
-        return links[:min(max_results,len(links))]
+        return links[:min(max_results, len(links))]
 
     def get_bad_comments_links(self, post_url, bad_profile_ids):
         """
@@ -203,3 +220,24 @@ class LinkedInAutomator:
         comments_links = self.get_bad_comments_links_many_posts(post_urls, profile_ids)
         return self.purge_comments_given_links(comments_links)
     
+    def purge_comments_recent(self, company_id, profile_ids, max_results=10, extra_post_urls=[]):
+        """
+        Deletes comments or replies made by bad profiles from the recent posts of a company.
+
+        Args:
+        company_id (str): Public ID of the company to get the recent posts from.
+        profile_ids (list): List of bad profile IDs (whose comments or replies should be deleted).
+        max_results (int): Maximum number of recent posts to retrieve. Defaults to 10.
+        extra_links (list): List of extra post links to purge.
+
+        Returns:
+        list: A list of dictionaries containing the link to the comment that failed to be deleted and the corresponding error message.
+        """
+        recent_posts_links = self.get_recent_posts(company_id, max_results)
+        failed_extra_comments = []
+        if len(extra_post_urls) > 0:
+            print("Extra post linked have been supplied. Purging them first....")
+            failed_extra_comments = self.purge_comments_given_links(extra_post_urls)
+        print(f"Back to purging comments on the {max_results} most recent posts....")
+        return self.purge_comments(recent_posts_links, profile_ids) + failed_extra_comments
+        
